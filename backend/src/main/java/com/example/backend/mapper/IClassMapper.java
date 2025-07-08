@@ -27,32 +27,41 @@ public interface IClassMapper {
     })
     ClassGroupDTO toDTO(ClassGroup classGroup);
 
+
     @AfterMapping
     default void afterMapping(ClassGroup classGroup, @MappingTarget ClassGroupDTO dto) {
         // Map thủ công danh sách course → CourseDTO
-        dto.setCourses(
-                classGroup.getCourses().stream()
-                        .map(course -> new CourseDTO(
-                                course.getCourseCode(),
-                                course.getName(),
-                                course.getLevel(),
-                                course.getDescription(),
-                                course.getDuration(),
-                                course.getTuitionFee()
-                        ))
-                        .collect(Collectors.toList())
-        );
+        if (classGroup.getCourses() != null) {
+            dto.setCourses(
+                    classGroup.getCourses().stream()
+                            .map(course -> new CourseDTO(
+                                    course.getCourseCode(),
+                                    course.getName(),
+                                    course.getLevel(),
+                                    course.getDescription(),
+                                    course.getDuration(),
+                                    course.getTuitionFee()
+                            ))
+                            .collect(Collectors.toList())
+            );
+        } else {
+            dto.setCourses(new java.util.ArrayList<>()); // tránh null
+        }
 
         // Map thủ công lịch học
-        dto.setSchedules(
-                classGroup.getSchedules().stream()
-                        .map(schedule -> new ScheduleDTO(
-                                schedule.getDayOfWeek(),
-                                schedule.getStartTime(),
-                                schedule.getEndTime(),
-                                schedule.getClassRoom().getName()
-                        ))
-                        .collect(Collectors.toList())
-        );
+        if (classGroup.getSchedules() != null) {
+            dto.setSchedules(
+                    classGroup.getSchedules().stream()
+                            .map(schedule -> new ScheduleDTO(
+                                    schedule.getDayOfWeek(),
+                                    schedule.getStartTime(),
+                                    schedule.getEndTime(),
+                                    schedule.getClassRoom().getName()
+                            ))
+                            .collect(Collectors.toList())
+            );
+        } else {
+            dto.setSchedules(new java.util.ArrayList<>()); // tránh null
+        }
     }
 }

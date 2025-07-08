@@ -14,5 +14,5 @@ public class ScheduleRequest {
     private LocalTime startTime;
     private LocalTime endTime;
     private Constants.DayOfWeekVN dayOfWeek;
-    private Long classroomId;
+    private String classroomName;
 }

@@ -11,12 +11,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClassRequest {
+    private String classCode;
     private String name;
     private Constants.ClassStatus status;        // ACTIVE, UPCOMING, COMPLETED, ...
     private Constants.LearningMode learningMode; // ONLINE, OFFLINE, HYBRID
     private int maxStudents;
     private Long classroomId;                    // có thể null nếu ONLINE
-    private Long teacherId;
-    private List<Long> courseIds;
+    private String teacherCode;
+    private List<String> courseCodes;
     private List<ScheduleRequest> schedules;
 }

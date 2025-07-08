@@ -114,6 +114,7 @@ public class ClassServiceImpl implements IClassService {
     @Transactional
     public ClassGroupDTO createClass(ClassRequest request) {
         ClassGroup classGroup = new ClassGroup();
+        classGroup.setClassCode(generateClassCode());
         classGroup.setName(request.getName());
         classGroup.setStatus(request.getStatus());
         classGroup.setLearningMode(request.getLearningMode());
@@ -121,13 +122,13 @@ public class ClassServiceImpl implements IClassService {
         classGroup.setCurrentStudents(0);
         classGroup.setStudents(new ArrayList<>());
 
-        if (request.getTeacherId() != null) {
-            Teacher teacher = teacherRepository.findById(request.getTeacherId()).orElse(null);
+        if (request.getTeacherCode() != null) {
+            Teacher teacher = teacherRepository.findByTeacherCode(request.getTeacherCode());
             classGroup.setTeacher(teacher);
         }
 
-        if (request.getCourseIds() != null && !request.getCourseIds().isEmpty()) {
-            List<Course> courses = courseRepository.findAllById(request.getCourseIds());
+        if (request.getCourseCodes() != null && !request.getCourseCodes().isEmpty()) {
+            List<Course> courses = courseRepository.findByCourseCodeIn(request.getCourseCodes());
             classGroup.setCourses(courses);
         }
 
@@ -139,9 +140,12 @@ public class ClassServiceImpl implements IClassService {
             List<ClassSchedule> scheduleList = new ArrayList<>();
 
             for (ScheduleRequest sr : request.getSchedules()) {
-                ClassRoom room = classroomRepository.findById(sr.getClassroomId()).orElse(null);
+                if (request.getSchedules() != null && !request.getSchedules().isEmpty()) {
+                    if (!validateSchedule(sr)) continue;
 
-                if (room != null && sr.getDayOfWeek() != null && sr.getStartTime() != null && sr.getEndTime() != null ) {
+                    ClassRoom room = classroomRepository.findByName(sr.getClassroomName());
+                    if (room == null) continue;
+
                     ClassSchedule schedule = new ClassSchedule();
                     schedule.setClassGroup(classGroup);
                     schedule.setClassRoom(room);
@@ -153,9 +157,25 @@ public class ClassServiceImpl implements IClassService {
             }
 
             classScheduleRepository.saveAll(scheduleList);
+            classGroup.setSchedules(scheduleList);
         }
 
-        return null;
+        return classMapper.toDTO(classGroup);
     }
+
+    private String generateClassCode() {
+        long count = classRepository.count();  // Đếm số lớp hiện có
+        long nextNumber = count + 1;
+        return String.format("CLS%03d", nextNumber);  // Ví dụ: CLS001, CLS012
+    }
+
+    private boolean validateSchedule(ScheduleRequest sr) {
+        return sr != null &&
+                sr.getClassroomName() != null &&
+                sr.getDayOfWeek() != null &&
+                sr.getStartTime() != null &&
+                sr.getEndTime() != null;
+    }
+
 }
 
