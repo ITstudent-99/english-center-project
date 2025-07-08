@@ -33,4 +33,7 @@ public interface IClassRepository extends JpaRepository <ClassGroup, Long>{
     );
 
     ClassGroup findByClassCode(String classCode);
+
+    @Query("SELECT MAX(c.id) FROM ClassGroup c")
+    Long findMaxId();
 }

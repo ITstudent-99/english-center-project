@@ -208,10 +208,36 @@ public class ClassServiceImpl implements IClassService {
         return classMapper.toDTO(classGroup);
     }
 
+    @Override
+    @Transactional
+    public void deleteClass(String classCode) {
+        ClassGroup classGroup = classRepository.findByClassCode(classCode);
+        if (classGroup == null) {
+            throw new RuntimeException("Không tìm thấy lớp với mã: " + classCode);
+        }
+
+        // 🔌 Ngắt liên kết để tránh lỗi ràng buộc ở các bảng trung gian
+        if (classGroup.getStudents() != null) {
+            classGroup.getStudents().clear(); // xóa dữ liệu ở bảng class_students
+        }
+
+        if (classGroup.getCourses() != null) {
+            classGroup.getCourses().clear(); // xóa dữ liệu ở bảng class_courses
+        }
+
+        // 🧹 orphanRemoval = true sẽ tự động xóa các bản ghi trong class_schedules
+        if (classGroup.getSchedules() != null) {
+            classGroup.getSchedules().clear(); // rõ ràng hơn để Hibernate xoá hết schedule
+        }
+
+        classRepository.delete(classGroup); // cuối cùng mới xóa class
+    }
+
+
     private String generateClassCode() {
-        long count = classRepository.count();  // Đếm số lớp hiện có
-        long nextNumber = count + 1;
-        return String.format("CLS%03d", nextNumber);  // Ví dụ: CLS001, CLS012
+        Long maxId = classRepository.findMaxId();
+        long nextNumber = (maxId != null ? maxId : 0) + 1;
+        return String.format("CLS%03d", nextNumber);
     }
 
     private boolean validateSchedule(ScheduleRequest sr) {

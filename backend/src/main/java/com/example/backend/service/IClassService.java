@@ -20,4 +20,5 @@ public interface IClassService {
 
     ClassGroupDTO createClass(ClassRequest request);
     ClassGroupDTO updateClass(String classCode, ClassRequest request);
+    void deleteClass(String classCode);
 }

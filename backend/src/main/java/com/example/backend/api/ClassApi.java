@@ -72,4 +72,15 @@ public class ClassApi {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lỗi khi cập nhật lớp học: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/delete/{classCode}")
+    public ResponseEntity<?> deleteClass(@PathVariable String classCode) {
+        try {
+            classService.deleteClass(classCode);
+            return ResponseEntity.ok("Xóa lớp học thành công");
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Lỗi khi xóa lớp học: " + ex.getMessage());
+        }
+    }
+
 }
