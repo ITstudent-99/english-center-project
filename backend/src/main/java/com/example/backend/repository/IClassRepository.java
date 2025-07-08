@@ -32,5 +32,5 @@ public interface IClassRepository extends JpaRepository <ClassGroup, Long>{
             Pageable pageable
     );
 
-
+    ClassGroup findByClassCode(String classCode);
 }

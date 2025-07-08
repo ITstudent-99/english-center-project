@@ -140,26 +140,71 @@ public class ClassServiceImpl implements IClassService {
             List<ClassSchedule> scheduleList = new ArrayList<>();
 
             for (ScheduleRequest sr : request.getSchedules()) {
-                if (request.getSchedules() != null && !request.getSchedules().isEmpty()) {
-                    if (!validateSchedule(sr)) continue;
+                if (!validateSchedule(sr)) continue;
 
-                    ClassRoom room = classroomRepository.findByName(sr.getClassroomName());
-                    if (room == null) continue;
+                ClassRoom room = classroomRepository.findByName(sr.getClassroomName());
+                if (room == null) continue;
 
-                    ClassSchedule schedule = new ClassSchedule();
-                    schedule.setClassGroup(classGroup);
-                    schedule.setClassRoom(room);
-                    schedule.setDayOfWeek(sr.getDayOfWeek());
-                    schedule.setStartTime(sr.getStartTime());
-                    schedule.setEndTime(sr.getEndTime());
-                    scheduleList.add(schedule);
-                }
+                ClassSchedule schedule = new ClassSchedule();
+                schedule.setClassGroup(classGroup);
+                schedule.setClassRoom(room);
+                schedule.setDayOfWeek(sr.getDayOfWeek());
+                schedule.setStartTime(sr.getStartTime());
+                schedule.setEndTime(sr.getEndTime());
+                scheduleList.add(schedule);
             }
 
             classScheduleRepository.saveAll(scheduleList);
             classGroup.setSchedules(scheduleList);
         }
 
+        return classMapper.toDTO(classGroup);
+    }
+
+    @Override
+    @Transactional
+    public ClassGroupDTO updateClass(String classCode, ClassRequest request) {
+        ClassGroup classGroup = classRepository.findByClassCode(classCode);
+        if (classGroup == null) {
+            throw new RuntimeException("Không tìm thấy lớp với mã: " + classCode);
+        }
+
+        if (request.getName() != null) {
+            classGroup.setName(request.getName());
+        }
+        if (request.getStatus() != null) {
+            classGroup.setStatus(request.getStatus());
+        }
+        if (request.getLearningMode() != null) {
+            classGroup.setLearningMode(request.getLearningMode());
+        }
+
+        classGroup.setMaxStudents(request.getMaxStudents());
+
+        if (request.getTeacherCode() != null) {
+            Teacher teacher = teacherRepository.findByTeacherCode(request.getTeacherCode());
+            classGroup.setTeacher(teacher);
+        }
+
+        if (request.getCourseCodes() != null && !request.getCourseCodes().isEmpty()) {
+            List<Course> courses = courseRepository.findByCourseCodeIn(request.getCourseCodes());
+            classGroup.setCourses(courses);
+        }
+
+        if (request.getSchedules() != null && !request.getSchedules().isEmpty()) {
+            List<ClassSchedule> oldSchedules = classGroup.getSchedules();
+            if (oldSchedules != null) {
+                oldSchedules.clear(); // orphanRemoval = true sẽ xoá trên DB
+            } else {
+                oldSchedules = new ArrayList<>();
+                classGroup.setSchedules(oldSchedules);
+            }
+
+            List<ClassSchedule> newSchedules = buildSchedules(request.getSchedules(), classGroup);
+            oldSchedules.addAll(newSchedules);
+        }
+
+        classRepository.save(classGroup);
         return classMapper.toDTO(classGroup);
     }
 
@@ -177,5 +222,22 @@ public class ClassServiceImpl implements IClassService {
                 sr.getEndTime() != null;
     }
 
+    private List<ClassSchedule> buildSchedules(List<ScheduleRequest> scheduleRequests, ClassGroup classGroup) {
+        List<ClassSchedule> schedules = new ArrayList<>();
+        for (ScheduleRequest sr : scheduleRequests) {
+            if (!validateSchedule(sr)) continue;
+            ClassRoom room = classroomRepository.findByName(sr.getClassroomName());
+            if (room == null) continue;
+
+            ClassSchedule schedule = new ClassSchedule();
+            schedule.setClassGroup(classGroup);
+            schedule.setClassRoom(room);
+            schedule.setDayOfWeek(sr.getDayOfWeek());
+            schedule.setStartTime(sr.getStartTime());
+            schedule.setEndTime(sr.getEndTime());
+            schedules.add(schedule);
+        }
+        return schedules;
+    }
 }
 

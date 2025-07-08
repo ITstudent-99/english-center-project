@@ -58,4 +58,18 @@ public class ClassApi {
                     .body("Lỗi khi tạo yêu cầu bồi thường: " + e.getMessage());
         }
     }
+
+    @PutMapping("/update/{classCode}")
+    public ResponseEntity<?> updateClass(
+            @PathVariable String classCode,
+            @RequestBody ClassRequest request
+    ) {
+        try {
+            ClassGroupDTO updated = classService.updateClass(classCode,
+                    request);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lỗi khi cập nhật lớp học: " + e.getMessage());
+        }
+    }
 }
